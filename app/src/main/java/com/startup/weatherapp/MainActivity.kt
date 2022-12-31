@@ -51,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         iconIV = findViewById(R.id.idIVIcon);
         searchIV = findViewById(R.id.idIVSearch);
         weatherRV = findViewById(R.id.idRVWeather);
-        
+
         weatherRVModalArrayList = ArrayList<WeatherRVModal>();
         weatherRVAdapter = WeatherRVAdapter(this, weatherRVModalArrayList!!);
 
