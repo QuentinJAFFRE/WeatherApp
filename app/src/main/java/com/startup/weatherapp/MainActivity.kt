@@ -1,16 +1,21 @@
 package com.startup.weatherapp
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
+import android.location.Location
 import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.view.WindowManager
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.RelativeLayout
-import android.widget.TextView
+import android.widget.*
+import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
+import java.util.*
+import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity() {
 
@@ -57,6 +62,61 @@ class MainActivity : AppCompatActivity() {
 
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager?;
 
+        val hasFineLocationPermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION);
+        val hasCoarseLocationPermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        if (hasFineLocationPermission != PackageManager.PERMISSION_GRANTED
+            && hasCoarseLocationPermission != PackageManager.PERMISSION_GRANTED) {
+
+            val permissions = arrayOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION);
+            //BOF : this -> MainActivity.this in tutorial
+            ActivityCompat.requestPermissions( this, permissions, PERMISSION_CODE);
+
+        }
+
+        val location: Location =
+            locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)!!;
+        val cityName: String = getCityName(location.longitude, location.latitude);
+        getWeatherInfo(cityName);
+
+        searchIV?.setOnClickListener( View.OnClickListener {
+            @Override
+            fun onClick(v: View?) {
+                val cityName: String = cityEdt?.getText().toString();
+                if (cityName == "") {
+                    Toast.makeText(this@MainActivity, "Please enter city name", Toast.LENGTH_SHORT).show();
+                } else {
+                    cityNameTV?.text = "";
+                    getWeatherInfo(cityName);
+                }
+            }
+        })
+    }
+
+    
+
+    private fun getCityName(longitude: Double, latitude: Double) : String {
+        var cityName: String = "Not found";
+        val gcd: Geocoder = Geocoder(baseContext, Locale.getDefault());
+        var addresses: List<Address> = ArrayList<Address>();
+        try {
+            addresses = gcd.getFromLocation(latitude, longitude, 10);
+        } catch (e: Exception) {
+            e.printStackTrace();
+        }
+        for (address in addresses) {
+            if (address == null) {
+                continue;
+            }
+            var cityAddress = address.locality;
+            if (cityAddress != null && cityAddress.length > 0) {
+                cityName = cityAddress;
+                break;
+            }
+            Toast.makeText(this, "City not found", Toast.LENGTH_SHORT).show();
+        }
+        return cityName;
     }
 
     private fun getWeatherInfo(cityName: String) {
